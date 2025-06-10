@@ -11,6 +11,7 @@ import collection.mutable.{Buffer, HashMap, SortedSet}
 import Elaborator.{Ctx, Ctxl, State, UnderCtx, ctx}
 import scala.annotation.targetName
 import Pattern.MatchMode
+import hkmc2.semantics.Pattern.Var
 
 object Desugarer:
   extension (op: Keyword.Infix)
@@ -564,15 +565,14 @@ class Desugarer(elaborator: Elaborator)(using Ctx, Raise, State, UnderCtx) exten
       case InfixApp(fieldName: Ident, Keyword.`:`, pat) => fallback => ctx =>
         val symbol = scrutSymbol.getFieldScrutinee(fieldName)
         Branch(
-          ref,
-          Pattern.Record((fieldName, symbol) :: Nil),
+          ref,          Pattern.Record((fieldName, (symbol, pat)) :: Nil),
           subMatches((symbol, pat, N) :: Nil, sequel)(Split.End)(ctx)
         ) ~: fallback
       case Pun(false, fieldName) => fallback => ctx =>
         val symbol = scrutSymbol.getFieldScrutinee(fieldName)
         Branch(
           ref,
-          Pattern.Record((fieldName, symbol) :: Nil),
+          Pattern.Record((fieldName, (symbol, fieldName)) :: Nil),
           subMatches((symbol, fieldName, N) :: Nil, sequel)(Split.End)(ctx)
         ) ~: fallback
       case Block(st :: Nil) => fallback => ctx =>
@@ -593,7 +593,7 @@ class Desugarer(elaborator: Elaborator)(using Ctx, Raise, State, UnderCtx) exten
         }.fold(fallback)(recordContent =>
           Branch(
             ref,
-            Pattern.Record(recordContent.map((fieldName, symbol, _) => (fieldName, symbol))),
+            Pattern.Record(recordContent.map((fieldName, symbol, pat) => (fieldName, (symbol, pat)))),
             subMatches(recordContent.map((_, symbol, pat) => (symbol, pat, N)), sequel)(Split.End)(ctx)
           ) ~: fallback
         )

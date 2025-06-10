@@ -502,7 +502,7 @@ class Lowering()(using Config, TL, Raise, State, Ctx):
                 mkMatch( // checking that we have an object
                   Case.Cls(objectSym, Value.Ref(BuiltinSymbol(objectSym.nme, false, false, true, false))),
                   entries.foldRight(go(tail, topLevel = false)):
-                    case ((fieldName, fieldSymbol), blk) =>
+                    case ((fieldName, (fieldSymbol, _)), blk) =>
                       mkMatch(
                         Case.Field(fieldName, safe = true), // we know we have an object, no need to check again
                         Assign(fieldSymbol, Select(sr, fieldName)(N), blk)
